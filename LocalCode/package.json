@@ -1,0 +1,13 @@
+{
+  "name": "cloudmqtttest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "newScript.js",
+  "scripts": {  "start": "node index.js" },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^5.3.3"
+  }
+}
