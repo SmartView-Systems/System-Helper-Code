@@ -25,11 +25,10 @@ const topicPart = ['/INIT/OUT', '/DATA', '/STATUS/OUT', '/CONFIG', '/STATUS/IN']
 
 //                  0              1          2    3         4     5         6     7
 const dataTypes = ['Temperature', 'Humidity','CO','Alcohol','CO2','Toluene','NH4','Acetone',]
-let dataArray = [];
 
 let returnDevices = [];
 
-const baseURL = "https://smartviewapi.netlify.app/.netlify/functions/"
+const baseURL = "https://smartviewapi2.netlify.app/.netlify/functions/"
 
 const topics = [];
 
@@ -95,8 +94,15 @@ client.on('message', async (topic, payload) => {
 
         if (data.success) {
           const deviceInfo = data.data;
-          const resultString = `${macAddress} ${deviceInfo.DeviceID} ${deviceInfo.Frequency} ${deviceInfo.Units}`;
-          // console.log(`Sending mqtt message with: ${resultString}`);
+          var resultString = `${macAddress} ${deviceInfo.DeviceID} ${deviceInfo.Frequency} ${deviceInfo.Units}`;
+          console.log(deviceInfo.SendData);
+          
+          for (let i = 0; i < deviceInfo.SendData.length; i++) {
+            if(deviceInfo.SendData[i] == "1"){
+              resultString += " X" + i.toString();
+            }
+          }
+          console.log(`Sending mqtt message with: ${resultString}`);
 
           const topicOut = incomingLab + '/INIT/IN' 
           // console.log(`Sending mqtt topic: ${topicOut}`);
@@ -130,16 +136,8 @@ client.on('message', async (topic, payload) => {
       console.log(`Intercepted: ${payload.toString()} but in debug mode so not sending a call to the API`);
     }
     else {
-      const dataMessageInfo = await parseDataMessage(payload.toString());
-      console.log(`datamessage info looks like ${dataMessageInfo}`);
-      const DeviceID = dataMessageInfo[0];
-      const Time = dataMessageInfo[1];
+      const [DeviceID, Time, dataArray] = await parseDataMessage(payload.toString());
 
-      dataArray.length = 0;
-      for (let index = 2; index <= 9; index++) {
-        dataArray.push(parseInt(dataMessageInfo[index]));
-      }
-  
       const resultRecent = await updateRecentDeviceData(incomingLab, DeviceID, Time, dataArray)
       const resultHistorical = await updateHistoricalDeviceData(incomingLab, DeviceID, Time, dataArray)
       const resultAlarm = await checkDeviceAlarmStatus(incomingLab, DeviceID, Time, dataArray)
@@ -203,8 +201,12 @@ async function parseInitMessage(message){
 }
 
 async function parseDataMessage(message){
-  const dataMessageInfo = message.split(' ');
-  return dataMessageInfo;
+  let [localDeviceID, localTime, ...rest] = message.split(' ');
+
+  // Parse the string to extract values associated with Xi
+  let localDataValues = rest.filter(token => token.startsWith('X')).map(token => parseFloat(token.split(':')[1]));
+
+  return [localDeviceID, localTime, localDataValues];
 }
 
 // 
@@ -221,7 +223,7 @@ async function updateManyDeviceStatus(labName, deviceArray) {
     redirect: 'follow'
   };
 
-  const functionString = "https://smartviewapi.netlify.app/.netlify/functions/updateManyDeviceStatus?labApi=" + labName;
+  const functionString = "https://smartviewapi2.netlify.app/.netlify/functions/updateManyDeviceStatus?labApi=" + labName;
 
   try {
     const response = await fetch(functionString, requestOptions);
@@ -254,7 +256,7 @@ async function addDeviceAPI(labName, IP, MAC) {
     redirect: 'follow'
   };
 
-  const functionString = "https://smartviewapi.netlify.app/.netlify/functions/addDevice?labApi=" + labName;
+  const functionString = "https://smartviewapi2.netlify.app/.netlify/functions/addDevice?labApi=" + labName;
 
   try {
     const response = await fetch(functionString, requestOptions);

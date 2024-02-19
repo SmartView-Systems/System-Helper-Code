@@ -33,7 +33,7 @@ const dataPoint = "2 1703704262 0 0 29 0 39 0 29 11"
 const statusMessage = "9";
 
 // (4) nialab/CONFIG <DeviceID> <Frequency> <Units>
-const configMessage = "9 60 Minute";
+const configMessage = "3 6 Minute 11111111";
 
 // (5) nialab//STATUS/OUT STATUS
 const statusOutMessage = "STATUS";
